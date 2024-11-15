@@ -12,7 +12,7 @@ const SearchForm = ({ query }: { query?: string }) => {
         className="search-input"
       />
       <div className="flex gap-2">
-        //! SearchFormReset created seperately because it's a client component
+        {/* SearchFormReset created seperately because it's a client component*/}
         {query && <SearchFormReset />}
         <button type="submit" className="search-btn text-white">
           <Search className="size-5" />

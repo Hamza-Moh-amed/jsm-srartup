@@ -947,13 +947,6 @@
         },
         "optional": true
       },
-      "name": {
-        "type": "objectAttribute",
-        "value": {
-          "type": "string"
-        },
-        "optional": true
-      },
       "username": {
         "type": "objectAttribute",
         "value": {
