@@ -1,6 +1,7 @@
 import SearchForm from "@/components/SearchForm";
 import StartupCard, { StartupTypeCard } from "@/components/StartupCard";
 import { client } from "@/sanity/lib/client";
+import { sanityFetch, SanityLive } from "@/sanity/lib/live";
 import { STARTUPS_QUERY } from "@/sanity/lib/queries";
 import React from "react";
 
@@ -9,9 +10,15 @@ export default async function Home({
 }: {
   searchParams: Promise<{ query?: string }>;
 }) {
-  const posts = await client.fetch(STARTUPS_QUERY);
-
+  //? Search params that modifies the URL
   const query = (await searchParams).query;
+  const params = { search: query || null };
+
+  //? This is the old fetch where content was cached, but we switched to live from sanity live
+  //const posts = await client.fetch(STARTUPS_QUERY);
+  //? This is the new fetch where content is live // added <SanityLive /> at the end of page // added params
+  const { data: posts } = await sanityFetch({ query: STARTUPS_QUERY, params });
+
   return (
     <>
       {/* Hero Section */}
@@ -42,6 +49,8 @@ export default async function Home({
           )}
         </ul>
       </section>
+
+      <SanityLive />
     </>
   );
 }
