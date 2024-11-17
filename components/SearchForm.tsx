@@ -1,24 +1,37 @@
-import Form from "next/form"; // Importing the Form component from Next.js for handling forms.
-import SearchFormReset from "./SearchFormReset"; // Importing a custom component to reset the search form.
-import { Search } from "lucide-react"; // Importing a search icon from the Lucide icon library.
+import Form from "next/form";
+{
+  /* Importing the Form component from Next.js for handling forms.*/
+}
+import SearchFormReset from "./SearchFormReset";
+{
+  /* Importing a custom component to reset the search form.*/
+}
+import { Search } from "lucide-react";
+{
+  /* Importing a search icon from the Lucide icon library.*/
+}
 
-/**
- * SearchForm Component
- *
- * This is a form component for searching startups. It includes an input field
- * for entering a query, a reset button (conditionally rendered), and a submit button with an icon.
- */
+{
+  /**
+   * SearchForm Component
+   *
+   * This is a form component for searching startups. It includes an input field
+   * for entering a query, a reset button (conditionally rendered), and a submit button with an icon.
+   */
+}
 const SearchForm = ({ query }: { query?: string }) => {
-  // `query` is a prop passed from the (root)/page.tsx to pre-fill the input field or enable reset functionality.
+  {
+    /* `query` is a prop passed from the (root)/page.tsx to pre-fill the input field or enable reset functionality.*/
+  }
 
   return (
     <Form action="/" scroll={false} className="search-form">
       {/* Input field for search queries */}
       <input
-        name="query" // The name attribute links this input to the form data.
-        defaultValue="" // Default value for the input field is empty.
-        placeholder="Search Startup" // Placeholder text displayed when the input is empty.
-        className="search-input" // Custom styling applied via CSS classes.
+        name="query"
+        defaultValue=""
+        placeholder="Search Startup"
+        className="search-input"
       />
 
       {/* Container for the reset button and submit button */}
