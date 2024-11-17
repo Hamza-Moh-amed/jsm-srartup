@@ -1,67 +1,84 @@
 import React, { Suspense } from "react";
-import Image from "next/image"; // For optimized image rendering.
-import Link from "next/link"; // For client-side navigation.
-import { notFound } from "next/navigation"; // For handling 404 cases.
-import { formatDate } from "@/lib/utils"; // Utility function for formatting dates.
+import Image from "next/image"; // Optimized image rendering in Next.js.
+import Link from "next/link"; // Client-side navigation component.
+import { notFound } from "next/navigation"; // Utility for rendering 404 pages.
+import { formatDate } from "@/lib/utils"; // Utility to format dates.
 
 import { client } from "@/sanity/lib/client"; // Sanity client for data fetching.
-import { STARTUP_BY_ID_QUERY } from "@/sanity/lib/queries"; // Sanity queries for fetching startup data.
+import {
+  PLAYLIST_BY_SLUG_QUERY,
+  STARTUP_BY_ID_QUERY,
+} from "@/sanity/lib/queries"; // Sanity queries for fetching startup and playlist data.
 
-import markdownit from "markdown-it"; // Markdown parser for rendering pitch content.
-import { Skeleton } from "@/components/ui/skeleton"; // Skeleton loader component for fallback UI.
-import View from "@/components/View"; // Component to display and update view counts.
+import markdownit from "markdown-it"; // Markdown parser to render rich text content.
+import { Skeleton } from "@/components/ui/skeleton"; // Loader component for fallback UI.
+import View from "@/components/View"; // Component for displaying and updating view counts.
+import StartupCard, { StartupTypeCard } from "@/components/StartupCard"; // Startup card component to display editor picks.
 
-// Initialize the markdown-it parser.
-const md = markdownit();
+const md = markdownit(); // Initialize the Markdown parser.
 
-// Enables experimental Parallel Routes and Layouts in Next.js.
-export const experimental_ppr = true;
-
-// TODO: Implement Editor-selected Startups feature.
+export const experimental_ppr = true; // Enable experimental Parallel Routes and Layouts in Next.js.
 
 /**
  * Page Component
  *
- * This React server component fetches and displays a startup's details using its unique ID.
- * It includes sections for title, description, pitch details (in Markdown), author information,
- * category, and a view count tracker.
+ * This React server component displays the details of a specific startup.
+ * It fetches the data for the startup and editor-selected posts in parallel for performance optimization.
+ * The page includes sections for:
+ * - Startup metadata (date, title, description, category, etc.)
+ * - Author information
+ * - Markdown-rendered pitch details
+ * - Editor-selected startup recommendations
+ * - View count tracking with lazy loading.
  *
+ * @param {Object} props - Component props.
+ * @param {Promise<{ id: string }>} props.params - URL parameters containing the `id` of the startup.
+ *
+ * @returns {JSX.Element} A React component for the startup page.
  */
 const Page = async ({ params }: { params: Promise<{ id: string }> }) => {
-  // Extract the `id` from the incoming `params` object.
+  // Extract the `id` parameter from the URL.
   const id = (await params).id;
 
-  // Fetch the startup data using the provided `id`.
-  const post = await client.fetch(STARTUP_BY_ID_QUERY, { id });
+  /*
+   * Fetch data in parallel:
+   * - `post`: Startup data by `id`.
+   * - `editorPosts`: Editor-selected posts fetched by slug.
+   * Parallel fetching reduces total loading time compared to sequential fetching.
+   */
+  const [post, { select: editorPosts }] = await Promise.all([
+    client.fetch(STARTUP_BY_ID_QUERY, { id }),
+    client.fetch(PLAYLIST_BY_SLUG_QUERY, { slug: "editor-picks" }),
+  ]);
 
-  // If the post does not exist, return a 404 page.
+  // If the startup is not found, render a 404 page.
   if (!post) return notFound();
 
-  // Parse the `pitch` content from Markdown to HTML.
+  // Render the pitch content from Markdown.
   const parsedContent = md.render(post?.pitch || "");
 
   return (
     <>
-      {/* Section for displaying the startup's creation date, title, and description */}
+      {/* Hero Section: Displays the startup's metadata */}
       <section className="pink_container !min-h-[230px]">
         <p className="tag">{formatDate(post?._createdAt)}</p>
         <h1 className="heading">{post?.title}</h1>
         <p className="sub-heading !max-w-5xl">{post?.description}</p>
       </section>
 
-      {/* Section for displaying the startup's main content */}
+      {/* Main Section: Displays the startup's details */}
       <section className="section_container">
-        {/* Display the startup's image */}
+        {/* Startup image */}
         <img
           src={post?.image}
           alt="thumbnail"
           className="w-full h-auto rounded-xl"
         />
 
-        {/* Container for author information, category, and pitch details */}
+        {/* Author information and category */}
         <div className="space-y-5 mt-10 max-w-4xl mx-auto">
-          {/* Author details and category */}
           <div className="flex-between gap-5">
+            {/* Author details */}
             <Link href={`/user/${post?.author?._id}`}>
               <Image
                 src={post?.author?.image}
@@ -75,13 +92,13 @@ const Page = async ({ params }: { params: Promise<{ id: string }> }) => {
                 <p className="text-16-medium">@{post?.author?.username}</p>
               </div>
             </Link>
+            {/* Startup category */}
             <p className="category-tag">{post?.category}</p>
           </div>
 
-          {/* Pitch details section */}
+          {/* Pitch details rendered from Markdown */}
           <h3 className="text-30-bold">Pitch Details</h3>
           {parsedContent ? (
-            // Render the pitch details as parsed HTML.
             <article
               className="prose max-w-4xl font-work-sans break-all"
               dangerouslySetInnerHTML={{ __html: parsedContent }}
@@ -91,12 +108,23 @@ const Page = async ({ params }: { params: Promise<{ id: string }> }) => {
           )}
         </div>
 
-        {/* Divider for separating sections */}
+        {/* Divider */}
         <hr className="divider" />
-        {/* TODO: Implement Editor-selected Startups */}
+
+        {/* Editor Picks Section */}
+        {editorPosts?.length > 0 && (
+          <div className="max-w-4xl mx-auto">
+            <p className="text-30-semibold">Editor Picks</p>
+            <ul className="mt-7 card_grid-sm">
+              {editorPosts.map((post: StartupTypeCard, i: number) => (
+                <StartupCard key={i} post={post} />
+              ))}
+            </ul>
+          </div>
+        )}
       </section>
 
-      {/* Suspense wrapper for lazy loading the `View` component */}
+      {/* View count tracking with lazy loading */}
       <Suspense fallback={<Skeleton className="view_skeleton" />}>
         <View id={id} />
       </Suspense>
