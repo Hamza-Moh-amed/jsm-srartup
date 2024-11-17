@@ -1,5 +1,3 @@
-// eslint-disable-next-line no-unused-vars
-
 import { z } from "zod";
 
 export const formSchema = z.object({
@@ -16,6 +14,7 @@ export const formSchema = z.object({
 
         return contentType?.startsWith("image/");
       } catch (error) {
+        console.error("Error validating URL:", error);
         return false;
       }
     }),
